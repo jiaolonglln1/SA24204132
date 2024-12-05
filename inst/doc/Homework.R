@@ -1,0 +1,983 @@
+## ----setup, include=FALSE-----------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time())
+r <- runif(5000)
+sigma <- 1
+x <- sqrt(-2 * sigma^2 * log(1-r))
+hist(x,density = 50,xlim = c(0, 5),xlab = 'value',ylab = 'count',main = 'Rayleigh distribution', nclass = 100)
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time())
+p <- c(1,0.75,0.5,0.25)
+i <- 1
+while (i <= 4) {
+  x1 <- rnorm(5000,mean = 0,sd = 1)
+  x2 <- rnorm(5000,mean = 3,sd = 1)
+  u <- runif(5000)
+  k <- as.integer(u > 1-p[i])
+  y <- k*x1 + (1-k)*x2
+  hist(y,density = 50,xlim = c(-4,6),xlab = 'value',ylab = 'count',main = 'Mixture Normal', nclass = 100)
+  i <- i + 1
+}
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time())
+t <- 10; lamda <- 1; a <- 1; r <- 1
+x <- c()
+for (i in 1:5000) 
+{
+  n <- rpois(1,t*lamda)
+  y <- 0
+  for (j in 1:n) 
+  {
+    y <- y + rgamma(1,a,r)
+  }
+  x[i] <- y
+}
+x_miu <- t * lamda * a / r
+x_miu
+x_bar <- mean(x)
+x_bar
+x_sigmasquare <- t * lamda * (a/r^2 + a^2/r^2)
+x_sigmasquare
+x_ssquare <- var(x)
+x_ssquare
+
+## -----------------------------------------------------------------------------
+# Write a function to compute the Monte Carlo estimate of cdf
+mc_cdfbeta <- function(x,a,b){
+  set.seed(Sys.time())
+  n <- 20000
+  u <- x*runif(n)
+  y <- (gamma(a+b)/(gamma(a)*gamma(b)))*u^(a-1)*(1-u)^(b-1)*x
+  estimate <- mean(y)
+  return(round(estimate,5))
+}
+
+# Compute the result of giving parameter x using the function
+m <- c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
+c1 <- c()
+c2 <- c()
+for(i in 1:length(m))
+{
+  c1[i] <- mc_cdfbeta(m[i],3,3)
+  c2[i] <- pbeta(m[i],3,3)
+}
+
+## ----5.4 result---------------------------------------------------------------
+c1
+c2
+
+## -----------------------------------------------------------------------------
+antirayleigh <- function(sigma){
+  set.seed(Sys.time())
+  n <- 5000
+  
+  # Antithetic variables method
+  u1 <- runif(n)
+  u2 <- 1-u1
+  x1 <- sqrt(-2 * sigma^2 * log(1-u1))
+  x1_anti <- sqrt(-2 * sigma^2 * log(1-u2))
+  antix <- (x1+x1_anti)/2
+  s1 <- var(antix)
+  
+  # Independent variables method
+  u3 <- runif(n)
+  x2 <- sqrt(-2 * sigma^2 * log(1-u3))
+  indx <- (x1+x2)/2
+  s2 <- var(indx)
+  
+  return(1-s1/s2)
+}
+
+## -----------------------------------------------------------------------------
+antirayleigh(1)
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time())
+x1 <- rgamma(50000,3,0.5)
+x2 <- rnorm(50000,mean = 0,sd = 1)
+g_x1 <- ((16/sqrt(2*pi))*exp((x1-x1^2)/2))*(x1>1)
+g_x2 <- x2^2*(x2>1)
+
+## -----------------------------------------------------------------------------
+mean(g_x1)
+mean(g_x2)
+var(g_x1)
+var(g_x2)
+
+## -----------------------------------------------------------------------------
+quicksort <- function(x){
+  set.seed(Sys.time())
+  if(length(x)<=1)return(x)
+  x0 <- x[1]
+  n <- length(x)
+  loc <- sample(1:n,size = 1,replace = F)
+  low <- 1
+  high <- n
+  while(low != high){
+    if(loc == low){
+      if(x[high] < x[loc]){
+        tmp <- x[high]
+        x[high] <- x[loc]
+        x[loc] <- tmp
+        low = low+1
+        loc = high
+      }else{
+        high = high - 1
+      }
+    }else{
+      if(x[low] > x[loc]){
+        tmp <- x[low]
+        x[low] <- x[loc]
+        x[loc] <- tmp
+        high = high -1
+        loc = low
+      }else{
+        low = low+1
+      }
+    }
+  }
+  L = c()
+  R = c()
+  if(low>1) L = x[1:(low-1)]
+  if(low<length(x)) R = x[(low+1):n]
+  return(c(quicksort(L),x[low],quicksort(R)))
+}
+bubblesort <- function(x){
+  n <- length(x)
+  if(n==1)
+  {
+    return(x)
+  }
+  for(i in 1:(n-1))
+  {
+    for(j in 1:(n-i))
+    {
+      if(x[j]>x[j+1])
+      {
+        temp <- x[j]
+        x[j] <- x[j+1]
+        x[j+1] <- temp
+      }
+    }
+  }
+  return(x)
+}
+fastersorting <- function(arr){
+  set.seed(Sys.time())
+  n <- length(arr)
+  if (n<=1) 
+  {
+    return(arr)
+  }
+  loc <- sample(1:n,size = 1,replace = F)
+  pivot <- arr[loc]
+  high <- n
+  low <- 1
+  
+  #左指针向右移动直到出现第一个与pivot的错排停下
+  while(arr[low]<pivot)
+  {
+    low <- low+1
+  }
+  
+  #左边指针第一次停下移动，且此时指向一个比pivot大的值
+  if(low!=loc)
+  {
+    arr[loc] <- arr[low]
+    while(high>low)
+    {
+      while(arr[high]>=pivot & high>low)
+      {
+        high <- high-1
+      }
+      arr[low] <- arr[high]
+      while(arr[low]<=pivot & high>low)
+      {
+        low <- low+1
+      }
+      arr[high] <- arr[low]
+    }
+    arr[low] <- pivot
+  }
+  else
+  {
+    if(loc!=high)
+    {
+      while(high>low)
+      {
+        while(arr[high]>=pivot & high>low)
+        {
+          high <- high-1
+        }
+        arr[low] <- arr[high]
+        while(arr[low]<=pivot & high>low)
+        {
+          low <- low+1
+        }
+        arr[high] <- arr[low]
+      }
+      arr[low] <- pivot
+    }
+  }
+  
+  L = c()
+  R = c()
+  if(low>1) L = arr[1:(low-1)]
+  if(low<n) R = arr[(low+1):n]
+  return(c(fastersorting(L),arr[low],fastersorting(R)))
+}
+
+## -----------------------------------------------------------------------------
+x1 <- c()
+x2 <- c()
+y1 <- c()
+y2 <- c()
+
+for (i in 1:50) 
+{
+  m <- i*10
+  t1 <- c()
+  t2 <- c()
+  for(j in 1:100)
+  {
+    a <- sample(1:m,size = m,replace = F)
+    sta1 <- Sys.time()
+    fastersorting(a)
+    end1 <- Sys.time()
+    t1[j] <- end1-sta1
+    sta2 <- Sys.time()
+    bubblesort(a)
+    end2 <- Sys.time()
+    t2[j] <- end2-sta2
+  }
+  x1[i] <- m*log2(m)
+  y1[i] <- mean(t1)
+  x2[i] <- m^2
+  y2[i] <- mean(t2)
+  
+}
+relation1 <- lm(y1~x1)
+relation2 <- lm(y2~x2)
+print(summary(relation1))
+print(summary(relation2))
+
+par(mfrow=c(1, 2))
+plot(x1,y1)
+abline(lm(y1~x1))
+plot(x2,y2)
+abline(lm(y2~x2))
+
+## -----------------------------------------------------------------------------
+library(e1071)
+set.seed(Sys.time())
+n <- 1000; m <- 10000
+p <- c(0.025,0.05,0.95,0.975)
+q.ske <- q.lsa <- numeric(4)
+for (i in 1:4) {
+  skex <- numeric(m)
+  for (j in 1:m) {
+    x <- rnorm(n)
+    skex[j] <- skewness(x)
+  }
+  q.ske[i] <- quantile(skex,probs = p[i])
+  q.lsa[i] <- qnorm(p[i], 0, sqrt(6/n))
+}
+
+## -----------------------------------------------------------------------------
+print(p)
+print(q.ske)
+print(q.lsa)
+
+## -----------------------------------------------------------------------------
+library(MASS)
+mu <- c(0, 0)
+sigma <- matrix(c(1, 0.6, 0.6, 1), nrow = 2)
+m <- 1000
+method <- c("pearson", "kendall", "spearman")
+power <- numeric(3)
+p.pearson <- numeric(m)
+p.kendall <- numeric(m)
+p.spearman <- numeric(m)
+for (j in 1:m) {
+  data <- mvrnorm(n = 10, mu = mu, Sigma = sigma, empirical = TRUE)
+  x <- data[,1]
+  y <- data[,2]
+  test1 <- cor.test(x, y,
+    alternative = "two.sided",
+    method = "pearson",
+    exact = NULL, conf.level = 0.95, continuity = FALSE)
+    p.pearson[j] <- test1$p.value
+  test2 <- cor.test(x, y,
+    alternative = "two.sided",
+    method = "kendall",
+    exact = NULL, conf.level = 0.95, continuity = FALSE)
+    p.kendall[j] <- test2$p.value
+  test3 <- cor.test(x, y,
+    alternative = "two.sided",
+    method = "spearman",
+    exact = NULL, conf.level = 0.95, continuity = FALSE)
+    p.spearman[j] <- test3$p.value
+}
+power <- c(mean(p.pearson <= .05),mean(p.kendall <= .05),mean(p.spearman <= .05))
+
+## -----------------------------------------------------------------------------
+print(method)
+print(power)
+detach("package:MASS",unload = T)
+detach("package:e1071",unload = T)
+
+## -----------------------------------------------------------------------------
+#定义条件
+set.seed(Sys.time())
+N <- 1000; N0 <- 950; alpha <- 0.1; a <- 0.1; b <- 1; m <- 10000
+
+#定义四个向量用于存储MC实验的结果
+FWER_B <- FDR_B <- TPR_B <- FWER_BH <- FDR_BH <- TPR_BH <- numeric(m)
+
+#形成一个包含950个1和50个0的向量并打乱顺序，表示1000个假设检验的真值，1表示原假设为真，0表示为假。
+h <- c()
+h[1:N0] <- 1; h[(N0+1):N] <- 0
+h1 <- sample(h,replace = F)
+
+#循环生成m次实验的各变量数据
+for (i in 1:m) {
+  #依据原假设和备择假设下p值的分布，生成随机的p值变量
+  p <- c()
+  for (j in 1:N) {
+    if (h1[j]==1) {
+      p[j] <- runif(1)
+    }else{
+      p[j] <- rbeta(1,a,b)
+    }
+  }
+  
+  #按照Bonferroni方法和B-H方法生成调整后的p值向量
+  p.adjB <- p.adjust(p,method = 'bonferroni')
+  p.adjBH <- p.adjust(p,method = 'fdr')
+  orderp.BH <- rank(p.adjBH)
+  
+  #计算两种方法各自的四个随机变量FP,TP,TN,FN的值
+  FP_B <- TP_B <- TN_B <- FN_B <- 0
+  FP_BH <- TP_BH <- TN_BH <- FN_BH <- 0
+  
+  for (k in 1:N) {
+    if (h1[k]==1) {
+      if (p.adjB[k]<(alpha/N)) {
+        FP_B <- FP_B+1
+      }else{
+        TN_B <- TN_B+1
+      }
+      if (p.adjBH[k]<(orderp.BH[k]*alpha/N)) {
+        FP_BH <- FP_BH+1
+      }else{
+        TN_BH <- TN_BH+1
+      }
+    }else{
+      if (p.adjB[k]<(alpha/N)) {
+        TP_B <- TP_B+1
+      }else{
+        FN_B <- FN_B+1
+      }
+      if (p.adjBH[k]<(orderp.BH[k]*alpha/N)) {
+        TP_BH <- TP_BH+1
+      }else{
+        FN_BH <- FN_BH+1
+      }
+    }
+  }
+  
+  #基于循环结果给第i次实验的各随机变量赋值
+  TPR_B[i] <- TP_B/(N-N0)
+  TPR_BH[i] <- TP_BH/(N-N0)
+  FDR_B[i] <- FP_B/(FP_B+TP_B)
+  FDR_BH[i] <- FP_BH/(FP_BH+TP_BH)
+  FWER_B[i] <- FP_B>=1
+  FWER_BH[i] <- FP_BH>=1
+}
+
+#将10000次MC实验的平均结果展示在表格中
+result <- round(matrix(c(mean(FWER_B),mean(FWER_BH),
+                   mean(FDR_B),mean(FDR_BH),
+                   mean(TPR_B),mean(TPR_BH)),
+                 nrow = 3, ncol = 2,byrow = T),6)
+rownames(result) <- c("FWER", "FDR","TPR")
+colnames(result) <- c("Bonferroni correction", "B-H correction")
+print(result)
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time())
+t <- c(3,5,7,18,43,85,91,98,100,130,230,487)
+B <- 100; lambdastar <- c(); lambdahat <- 1/mean(t)
+for (b in 1:B) {
+  tstar <- sample(t,replace = T)
+  lambdastar[b] <- 1/mean(tstar)
+}
+round(c(bias=mean(lambdastar)-lambdahat,se=sd(lambdastar)),6)
+
+## -----------------------------------------------------------------------------
+library(boot)
+set.seed(Sys.time())
+t <- c(3,5,7,18,43,85,91,98,100,130,230,487); B <- 100; m <- 1000
+
+#定义需要boot函数返回的统计量
+xbar <- function(x,i) mean(x[i])
+
+#使用boot函数得到重抽样结果记录在boot.result中
+bootresult <- boot(data=t, statistic = xbar, R=B)
+
+#构造一个m个向量元素组成的向量，用来装MC实验得到的单个样本
+ci.norm <- ci.basic <- ci.perc <- ci.bca <- matrix(NA,m,3)
+
+#使用结果计算置信区间(使用suppress函数阻止警告信息显示)
+suppressWarnings({for (i in 1:m) {
+  ci <- boot.ci(bootresult,type=c("norm","basic","perc","bca"))
+  ci.norm[i,] <- c(ci$norm[2:3],ci$norm[3]-ci$norm[2])
+  ci.basic[i,] <- c(ci$basic[4:5],ci$basic[5]-ci$basic[4])
+  ci.perc[i,] <- c(ci$percent[4:5],ci$percent[5]-ci$percent[4])
+  ci.bca[i,] <- c(ci$bca[4:5],ci$bca[5]-ci$bca[4])
+}})
+
+#将结果展示在一个4*3的表格中
+result <- rbind(
+  c(mean(ci.norm[,1]),mean(ci.norm[,2]),mean(ci.norm[,3])),
+  c(mean(ci.basic[,1]),mean(ci.basic[,2]),mean(ci.basic[,3])),
+  c(mean(ci.perc[,1]),mean(ci.perc[,2]),mean(ci.perc[,3])),
+  c(mean(ci.bca[,1]),mean(ci.bca[,2]),mean(ci.bca[,3])))
+rownames(result) <- c("norm", "basic","per","bca")
+colnames(result) <- c("lower", "upper","len")
+print(result)
+detach("package:boot",unload = T)
+
+## -----------------------------------------------------------------------------
+#Jack-knife estimate for Variance contribution rate of the first principal component
+jkfcr <- function(x){
+  n <- nrow(x); p <- ncol(x)
+  sig0 <- cor(x); fcr0 <- eigen(sig0)$values[1]/sum(eigen(sig0)$values)
+  fcr <- numeric(n)
+  for (i in 1:n) {
+    xjk <- x[-i,]
+    sig <- cor(xjk)
+    eigen_result <- eigen(sig)
+    eigen_value <- eigen_result$values
+    fcr[i] <- eigen_value[1]/sum(eigen_value)
+  }
+  result <- round(c(bias = (n-1)*(mean(fcr)-fcr0),
+                    se = sqrt(((n-1)/n)*(n-1)*var(fcr))),6)
+  return(result)
+}
+
+## -----------------------------------------------------------------------------
+#Load the bootsrap package to get the data named 'scor', get its Jack-knife estimate' s bias and stand error
+library(bootstrap)
+x <- data.frame(x1 = scor$mec,x2 = scor$vec,
+                x3 = scor$alg,x4 = scor$ana,x5 = scor$sta)
+jkfcr(x)
+
+## -----------------------------------------------------------------------------
+#function to asses regression models based on n-fold residuals or R^2
+#method == nfold for n-fold, method == R2 for R^2
+assessmodel <- function(x,y,method ="nfold"){
+  if(method=="nfold"){
+    n <- length(x); e1 <- e2 <- e3 <- e4 <- numeric(n)
+    for (i in n) {
+      yn <- y[-i]; xn <- x[-i]
+      J1 <- lm(yn~xn); J2 <- lm(yn ~ xn + I(xn^2))
+      J3 <- lm(log(yn) ~ xn); J4 <- lm(yn ~ xn + I(xn^2) + I(xn^3))
+      yhat1 <- J1$coef[1]+J1$coef[2]*x[i]
+      yhat2 <- J2$coef[1]+J2$coef[2]*x[i]+J2$coef[3]*x[i]^2
+      yhat3 <- J3$coef[1]+J3$coef[2]*x[i]
+      yhat4 <- J4$coef[1]+J4$coef[2]*x[i]+J4$coef[3]*x[i]^2++J4$coef[4]*x[i]^3
+      e1[i] <- y[i]-yhat1; e2[i] <- y[i]-yhat2;
+      e3[i] <- y[i]-yhat3; e4[i] <- y[i]-yhat4
+    }
+    print("n-fold")
+    result <- round(c("Linear" = mean(e1^2),
+                      "Quardratic" = mean(e2^2),
+                      "Exponential" = mean(e3^2),
+                      "Cubic" = mean(e4^2)),4)
+    return(result)
+  }else if(method=="R2"){
+    J1 <- lm(y~x); J2 <- lm(y ~ x + I(x^2))
+    J3 <- lm(log(y) ~ x); J4 <- lm(y ~ x + I(x^2) + I(x^3))
+    print("R^2")
+    result <- round(c("Linear" = summary(J1)$adj.r.squared,
+                      "Quardratic" = summary(J2)$adj.r.squared,
+                      "Exponential" = summary(J3)$adj.r.squared,
+                      "Cubic" = summary(J4)$adj.r.squared),4)
+    return(result)
+  }
+}
+
+## -----------------------------------------------------------------------------
+library(DAAG)
+assessmodel(ironslag$magnetic, ironslag$chemical, method = "nfold")
+assessmodel(ironslag$magnetic, ironslag$chemical, method = "R2")
+detach("package:bootstrap",unload = T)
+detach("package:DAAG",unload = T)
+
+## -----------------------------------------------------------------------------
+#Define a function for two-sample Cram ́er-von Mises test for equal distributions
+#method = 1 or 2 represent two different ways to generate permuted samples
+cm.test <- function(x, y, alternative = "twosided", method = 1){
+  set.seed(Sys.time())
+  m <- length(y); n <- length(x)
+  z <- c(x,y); K <- 1:(m+n); R <- 999
+  W2 <- numeric(R); W20 <- (m*n/(m+n)^2)*sum((ecdf(x)(z)-ecdf(y)(z))^2) 
+  for (i in 1:R) {#generate permutated sample x and y
+    if(method==1){
+      k <- sample(K,size = n,replace = FALSE)
+      xstar <- z[k]; ystar <- z[-k]
+      xy <- c(xstar,ystar)
+    }else if(method==2){
+      xy <- sample(z)
+      xstar <- xy[1:n]; ystar <- xy[-(1:n)]
+    }
+    W2[i] <- (m*n/(m+n)^2)*sum((ecdf(xstar)(xy)-ecdf(ystar)(xy))^2)
+  }
+  if(alternative == "twosided"){
+    p <- mean(abs(c(W20,W2)) >= abs(W20))
+  }else if(alternative == "rightsided"){
+    p <- mean(c(W20,W2) >= W20)
+  }else if(alternative == "leftsided"){
+    p <- mean(c(W20,W2) <= W20)
+  }
+  return(p)
+}
+
+## -----------------------------------------------------------------------------
+attach(chickwts)
+#example8.1
+x <- sort(as.vector(weight[feed == "soybean"])) 
+y <- sort(as.vector(weight[feed == "linseed"])) 
+p_cm1 <- cm.test(x,y)
+#example8.2
+x <- sort(as.vector(weight[feed == "sunflower"])) 
+y <- sort(as.vector(weight[feed == "linseed"])) 
+p_cm2 <- cm.test(x,y)
+print(c("soybean-linseed" = p_cm1, "sunflower-linseed" = p_cm2))
+detach(chickwts)
+
+## -----------------------------------------------------------------------------
+#Define a function for two-sample Spearman rank corelation test for independency
+sp.test <- function(x, y, alternative = "twosided"){
+  set.seed(Sys.time())
+  m <- length(y); n <- length(x); R <- 999
+  if(m!=n){
+    return("Wrong, the lenth of x should be equal to y.")
+  }
+  s_rank <- numeric(R); s_rank0 <- cor(x,y,method = "spearman") 
+  for (i in 1:R) {#generate permuted sample y to match original x
+    xstar <- x; ystar <- sample(y)
+    s_rank[i] <- cor(xstar,ystar,method = "spearman")
+  }
+  if(alternative == "twosided"){
+    p <- mean(abs(c(s_rank0,s_rank)) >= abs(s_rank0))
+  }else if(alternative == "rightsided"){
+    p <- mean(c(s_rank0,s_rank) >= s_rank0)
+  }else if(alternative == "leftsided"){
+    p <- mean(c(s_rank0,s_rank) <= s_rank0)
+  }
+  return(p)
+}
+
+## -----------------------------------------------------------------------------
+set.seed(Sys.time()); library(MASS)
+n <- 10; miu <- rep(0,2); sig <- matrix(c(1,0.5,0.5,1),nrow = 2,byrow = T)
+data <- mvrnorm(n,miu,sig)
+x <- data[,1]; y <- data[,2]
+round(c("Spearman correlation" = sp.test(x,y), 
+        "cor.test" = cor.test(x,y)$p.value),6)
+
+## -----------------------------------------------------------------------------
+mh_cauchy_sample <- function(n,burn,theta = 1,eta = 0){
+  set.seed(123); x <- numeric(n)
+  rxy <- function(x,y){
+    return((dcauchy(y,location = eta,scale = theta)*dnorm(x,mean = y,sd = 1))/
+             (dcauchy(x,location = eta,scale = theta)*dnorm(y,mean = x,sd = 1)))
+  }
+  x[1] <- rnorm(1,0,1)
+  for (i in 2:n) {
+    xt <- x[i-1]
+    y <- rnorm(1,mean = xt,sd = 1)
+    u <- runif(1)
+    if (u<=rxy(xt,y)) {
+      x[i] <- y
+    }else{
+      x[i] <- xt
+    }
+  }
+  return(x[(burn+1):n])
+}
+
+## -----------------------------------------------------------------------------
+n <- 50000; burn <- 10000
+MH_random_variables <- mh_cauchy_sample(n, burn)
+#生成样本和理论值的十分位数
+theoretic_value <- qcauchy(seq(0.1,0.9,0.1))
+sample_value <- quantile(MH_random_variables,probs = seq(0.1,0.9,0.1))
+round(rbind(theoretic_value,sample_value),3)
+
+## -----------------------------------------------------------------------------
+#定义生成gibbs方法的随机样本，输入参数n，a，b，burn，m输出样本
+gibbs_sample <- function(m, burn, a, b, n) {
+  set.seed(Sys.time())
+  x <- matrix(0,m,2)
+  x[1,] <- c(1,1)
+  for (i in 2:m) {
+    x2 <- x[i-1,2]
+    x[i,1] <- rbinom(n = 1,size = n,prob = x2)
+    x1 <- x[i,1]
+    x[i,2] <- rbeta(n = 1,shape1 = (x1+a),shape2 = (n-x1+b))
+  }
+  return(x[(burn+1):m,])
+}
+
+## -----------------------------------------------------------------------------
+m <- 50000; a <- 1; b <- 1; burn <- 10000; n <- 2
+GBS_random_variables <- gibbs_sample(m,burn,a,b,n)
+head(GBS_random_variables)
+
+## -----------------------------------------------------------------------------
+Gelman.Rubin <- function(psi) { 
+  psi <- as.matrix(psi) 
+  n <- ncol(psi) 
+  k <- nrow(psi)  
+  psi.means <- rowMeans(psi) 
+  B <- n * var(psi.means) 
+  psi.w <- apply(psi, 1, "var")
+  W <- mean(psi.w) #within est. 
+  v.hat <- W*(n-1)/n + (B/n) 
+  r.hat <- sqrt(v.hat / W)  
+  return(r.hat) 
+}
+grtest <- function(n,k = 4, method){
+  a <- 1; b <- 1; burn <- 0
+  x <- matrix(0,nrow = k,ncol = n-burn)
+  for (i in 1:k) {
+    if (method=='MH') {
+      x[i,] <- mh_cauchy_sample(n, burn)
+      psi <- (t(apply(x,1,cumsum)))
+      for (i in 1:nrow(psi)) {
+        psi[i,] <- psi[i,]/(1:ncol(psi))
+      }
+    }else if (method=='GBS') {
+      x[i,] <- gibbs_sample(n,a,b,burn)
+    }
+  }
+  return(Gelman.Rubin(psi))
+}
+
+## -----------------------------------------------------------------------------
+grtest(10000,method = 'MH')
+
+## -----------------------------------------------------------------------------
+#定义函数用于计算第k项的值
+kvalue <- function(a,k){
+  d <- length(a)
+  v <- ((-1)^k/factorial(k)*2^k)*
+    (norm(a,type = '2')^(2*k+2)/((2*k+1)*(2*k+2)))*
+    (gamma((d+1)/2)*gamma(k+3/2)/gamma(k+d/2+1))
+  return(v)
+}
+
+#定义函数用于求和，保证其收敛到与真值误差在一定范围内
+asum <- function(a, tol = 1e-5){
+  s <- k <- 0
+  while(1){
+    sk <- kvalue(a,k)
+    if (abs(sk)<=tol) {
+      break
+    }else{
+      s <- s+sk
+      k <- k+1
+    }
+  }
+  invisible(list(sum=s,term=k+1))
+}
+
+## -----------------------------------------------------------------------------
+a <- c(1,2)
+result <- asum(a,tol = 1e-10)
+print(result$sum)
+print(result$term)
+
+## -----------------------------------------------------------------------------
+#定义一个函数用于解固定的k与k+1相等时a的值
+avalue <- function(k,tol=1e-5){
+  #g用于对输入的值a计算某个给定的ck上限的积分
+  a <- sqrt(k)/5
+  
+  #A函数为需要解的方程
+  A <- function(a){
+    #定义一个函数计算某项积分的值
+    integral <- function(a,k){
+      f <- function(u){(1+u^2/k)^(-(1+k)/2)}
+      c <- sqrt((a^2*k)/(k+1-a^2))
+      return((2*gamma((k+1)/2)/(sqrt(pi*k)*gamma(k/2)))
+             *integrate(f,0,c)$value)
+    }
+    return(integral(a,k)-integral(a,k-1))
+  }
+  
+  #dA为A函数在a点的导数数值解
+  dA <- function(a,h=tol/100){(A(a+h)-A(a))/h}
+  
+  #使用newton-raphson算法进行迭代
+  while(1){
+    a <- a-A(a)/dA(a)
+    if(abs(A(a)/dA(a))<=tol){
+      break
+    }
+  }
+  return(a)
+}
+
+## -----------------------------------------------------------------------------
+k <- c(25:100)
+a <- c()
+for(i in k){
+  a <- c(a,avalue(i))
+}
+plot(k,a)
+
+## -----------------------------------------------------------------------------
+EM_lambda <- function(y,tol = 1e-5, max_iter = 100){
+  n <- length(y); lambda0 <- mean(y); tau <- max(y); k <- 0
+  while (1) {
+    ety <- numeric(n)
+    for (i in 1:n) {
+      if (y[i]<tau) {
+        ety[i] <- y[i]
+      }else{
+        ety[i] <- tau+lambda0
+      }
+    }
+    Et_y <- function(lambda){
+      return((-1)*n*log(lambda)-(1/lambda)*sum(ety))
+    }
+    lambda1 <- optimize(Et_y,lower = 0,upper = 10,maximum = T)$maximum
+    k <- k+1
+    if (abs(lambda0-lambda1)<=tol | k == 100) {
+      return(lambda1)
+    }else{
+      lambda0 <- lambda1
+    }
+  }
+}
+
+## -----------------------------------------------------------------------------
+MLE_lambda <- function(y){
+  n <- length(y); tau <- max(y)
+  loglike <- function(lambda){
+    lly <- numeric(n)
+    for (i in 1:n) {
+      if (y[i]<tau) {
+        lly[i] <- -log(lambda)-y[i]/lambda
+      }else{
+        lly[i] <- -tau/lambda
+      }
+    }
+    return(sum(lly))
+  }
+  lambdahat <- optimize(loglike,lower = 0,upper = 10,maximum = TRUE)$maximum
+  return(lambdahat)
+}
+
+## -----------------------------------------------------------------------------
+y <- c(0.54,0.48,0.33,0.43,1.00,1.00,0.91,1.00,0.21,0.85)
+round(c(EM_lambda=EM_lambda(y),MLE_lambda=MLE_lambda(y),mean_lambda=mean(y)),6)
+
+## -----------------------------------------------------------------------------
+library(boot)
+A1 <- rbind(c(2,1,1),c(1,-1,3))
+a <- c(4,2,9)
+b1 <- c(2,3)
+simplex(a=a,A1=A1,b1=b1,maxi = T)
+detach("package:boot",unload = T)
+
+## -----------------------------------------------------------------------------
+formulas <- list(
+mpg ~ disp,
+mpg ~ I(1 / disp),
+mpg ~ disp + wt,
+mpg ~ I(1 / disp) + wt
+)
+
+out1_lapply <- lapply(formulas, function(formulas) lm(formula = formulas, data = mtcars))
+
+## -----------------------------------------------------------------------------
+n <- length(formulas)
+out1_forloop <- vector("list",length = n)
+for (i in 1:n) {
+  out1_forloop[[i]] <- lm(formula = formulas[[i]],data = mtcars)
+}
+
+## -----------------------------------------------------------------------------
+bootstraps <- lapply(1:10, function(i) {
+rows <- sample(1:nrow(mtcars), rep = TRUE)
+mtcars[rows, ]
+})
+
+out2_lapply <- lapply(bootstraps, lm, formula = mpg ~ disp)
+
+## -----------------------------------------------------------------------------
+n <- 10
+out2_forloop <- vector("list",length = n)
+for (i in 1:n) {
+  bootstraps <- mtcars[sample(1:nrow(mtcars),rep = T),]
+  out2_forloop [[i]] <- lm(formula = mpg ~ disp,data = bootstraps)
+}
+
+## -----------------------------------------------------------------------------
+rsq <- function(mod) summary(mod)$r.squared
+R2_1 <- rbind(unlist(lapply(out1_lapply, rsq)))
+R2_2 <- rbind(unlist(lapply(out2_lapply, rsq)))
+names1 <- c('mpg ~ disp','mpg ~ I(1 / disp)','mpg ~ disp + wt','mpg ~ I(1 / disp) + wt')
+names2 <- 1:10
+colnames(R2_1) <- names1
+colnames(R2_2) <- names2
+R2_1
+R2_2
+
+## -----------------------------------------------------------------------------
+trials <- replicate(
+100,
+t.test(rpois(10, 10), rpois(7, 10)),
+simplify = FALSE
+)
+
+sapply(trials, function(result) result$p.value)
+
+## ----111----------------------------------------------------------------------
+mv_lapply <- function(X, f, simplify = F){
+  #识别f(x)的数据类型，记录为fv
+  fv <- typeof(f(x[i]))
+  
+  #生成一个长度为1，数据类型为fv的向量作为vapply的参数
+  f.value <- vector(mode = fv, length = 1)
+  
+  #对x每个元使用vapply
+  out <- Map(function(x) vapply(x, f, f.value), X)
+  
+  #对是否输出向量类型进行判断
+  if(simplify == T){return(simplify2array(out))}
+  return(out)
+}
+
+x <- c(0,1,2,3,4,5,6)
+f <- function(x) x>2
+unlist(lapply(x, f)) == unlist(mv_lapply(x,f))
+
+## -----------------------------------------------------------------------------
+#两样本卡方独立性检验
+fastchisqtest <- function(x,y){
+  if (length(x)!=length(y)) {stop("x与y长度不一致，请检查后输入。")}
+  tab <- rbind(x, y)
+  n <- sum(tab)
+  ni_ <- rowSums(tab)
+  n_j <- colSums(tab)
+  div <- tcrossprod(ni_,n_j)
+  chisqe <- n*(sum(tab^2/div)-1)
+  d <- length(n_j)-1
+  pvalue <- pchisq(chisqe, df = d, lower.tail = F)
+  return(list(chi_stat = chisqe, df = d, `p-value` = pvalue))
+}
+
+## -----------------------------------------------------------------------------
+options(warn = -1)
+x <- sample(1:10,replace = T); y <- sample(1:10,replace = T)
+fastchisqtest(x,y)
+chisq.test(cbind(x,y))
+
+## -----------------------------------------------------------------------------
+time_fast_0 <- Sys.time()
+invisible(fastchisqtest(x,y))
+time_fast_1 <- Sys.time()
+time_fast <- time_fast_1-time_fast_0
+time_chi_0 <- Sys.time()
+invisible(chisq.test(cbind(x,y)))
+time_chi_1 <- Sys.time()
+time_chi <- time_chi_1-time_chi_0
+round(c('time of fast' = time_fast, 'time of chisq.test' = time_chi),8)
+
+## -----------------------------------------------------------------------------
+options(warn = -1)
+microbenchmark::microbenchmark(
+  fastchisqtest(x,y),
+  chisq.test(cbind(x,y))
+)
+
+## -----------------------------------------------------------------------------
+fasttable <- function(x, y){
+  xtitle <- sort(unique(x))
+  ytitle <- sort(unique(y))
+  lx <- length(xtitle)
+  ly <- length(ytitle)
+  dim <- c(lx, ly)
+  pr <- lx * ly
+  dimnames <- list(x = xtitle, y = ytitle)
+  bin <- fastmatch::fmatch(x, xtitle) +lx * fastmatch::fmatch(y, ytitle) - lx
+  tab <- tabulate(bin, pr)
+   tab<- array(tab, dim = dim, dimnames = dimnames)
+  class(tab) <- "table"
+  tab
+}
+
+## -----------------------------------------------------------------------------
+x <- sample(1:10,replace = T); y <- sample(1:10,replace = T)
+table(x,y)
+fasttable(x,y)
+
+## -----------------------------------------------------------------------------
+microbenchmark::microbenchmark(
+  table(x, y),
+  fasttable(x, y)
+)
+
+## -----------------------------------------------------------------------------
+library(Rcpp)
+cppFunction('NumericMatrix gibbsC(int k, int thin, double a, double b, int n) {
+    NumericMatrix mat(k, 2);
+    int x = 0;
+    double y = 0.5;
+    for (int i = 0; i < k; i++) {
+        for (int j = 0; j < thin; j++) {
+            x = rbinom(1, n, y)[0];
+            y = rbeta(1, (x + a), (n - x + b))[0];
+        }
+        mat(i, 0) = x;
+        mat(i, 1) = y;
+    }
+    return(mat);
+}')
+
+## -----------------------------------------------------------------------------
+gibbsR <- function(k,thin, a, b, n) {
+  mat <- matrix(0,ncol=2,nrow=k)
+  x <- 0
+  y <- 0.5
+  for (i in 1:k) {
+    for (j in 1:thin) {
+      x <- rbinom(1, n, y)
+      y <- rbeta(1, (x + a), (n - x + b))
+    }
+    mat[i,] <- c(x,y)
+  }
+  mat
+}
+
+## -----------------------------------------------------------------------------
+k <- 100; thin <- 10; a <- 1; b <- 1; n <- 2  
+gibbs_sample_R <- gibbsR(k,thin, a, b, n)
+gibbs_sample_C <- gibbsC(k, thin, a, b, n)
+qqplot(gibbs_sample_R, gibbs_sample_C)
+abline(0, 1, col = "red")
+
+## -----------------------------------------------------------------------------
+microbenchmark::microbenchmark(gibbs_sample_R <- gibbsR(k,thin, a, b, n),
+               gibbs_sample_C <- gibbsC(k, thin, a, b, n))
+

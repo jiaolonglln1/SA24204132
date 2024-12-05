@@ -1,0 +1,16 @@
+Package: SA24204132
+Type: Package
+Title: A coordinate descent algorithm for compositional data lasso problems
+Version: 1.0
+Date: 2024-12-5
+Author: Zehua Dong
+Maintainer: Zehua Dong <1758203654@qq.com>
+Description: Several R and Rcpp functions are included in this package for regression and tuning parameter. 
+License: GPL (>= 2)
+Imports: boot, bootstrap, DAAG, e1071, MASS, microbenchmark, Rcpp, knitr, rmarkdown
+LinkingTo: Rcpp
+RoxygenNote: 7.3.2
+Encoding: UTF-8
+VignetteBuilder: knitr
+URL: https://github.com/jiaolonglln1/SA24204132
+BugReports: https://github.com/jiaolonglln1/SA24204132/issues

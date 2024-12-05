@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="SA24204132" />
+
+<meta name="date" content="2024-12-04" />
+
+<title>Introduction to R-package</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to R-package</h1>
+<h4 class="author">SA24204132</h4>
+<h4 class="date">2024-12-04</h4>
+
+
+
+<div id="总览" class="section level2">
+<h2>总览</h2>
+<p>__SA24204132__该包是文献https://doi.org/10.1093%2Fbiomet%2Fasu031的一个实现，这篇文章主要讨论了关于成分数据的lasso问题，由于成分数据存在行和为常数的约束，导致一般的lasso算法无法应用于此类问题，因此作者引入了基于成分数据对数对比模型的坐标下降算法。该包内主要包括以下函数：_data_是用于测试包内容的原始数据集；_s_soft_thr_是求一般的lasso问题的软阈值函数；_r_cdmlasso_和_c_cdmlasso_是论文中核心算法的实现，前者为R代码，后者为Rcpp实现，后续有此表示的皆为同意，不再赘述；_r_clambda_和_c_clambda_是对lasso罚项的调参函数，具体是将GIC信息准则作为一个连续函数进行优化来求解；_r_slambda_同样是调参函数，但其方法是给定一个lambda取值范围得到序列，通过对其遍历求得使得GIC达到最小的lambda。本文档主要演示R函数的使用说明，Rcpp函数与R函数类似，唯一需要注意的问题是，Rcpp函数只能接受数值向量和数值矩阵作为输入，而本文档中_data_是list格式，类似清空均需要再使用函数前转变其格式，这点在函数使用说明中也同样做了解释。</p>
+</div>
+<div id="详细说明" class="section level2">
+<h2>详细说明</h2>
+<div id="数据" class="section level3">
+<h3>数据</h3>
+<p>这里首先展示了包内数据集的生成过程，本数据集参考论文中computing
+experiment的部分，首先生成一个30维50样本的正态随机数矩阵，再将其进行对数对比转换变生成随机变量矩阵z。再约定一个30维的稀疏系数向量<span class="math inline">\(\beta\)</span>以及满足正态性假定的残差项，由此两部分以及z反向生成满足回归方程的响应变量y。将y和z输出为50*31的矩阵就是data.rda文件的内容。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co">#生成正态随机变量矩阵</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fl">0.2</span>; n <span class="ot">&lt;-</span> <span class="dv">50</span>; p <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">log</span>(<span class="fl">0.5</span><span class="sc">*</span>p),<span class="dv">5</span>),<span class="fu">rep</span>(<span class="dv">0</span>,p<span class="dv">-5</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow =</span> p,<span class="at">ncol =</span> p)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>p) {</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>p) {</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>    sigma[i,j] <span class="ot">&lt;-</span> l<span class="sc">^</span><span class="fu">abs</span>(i<span class="sc">-</span>j)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  }</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>}</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>w <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">mvrnorm</span>(n,<span class="at">mu=</span>theta,<span class="at">Sigma =</span> sigma)</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#将正态样本转化为对数成分数据z</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>x <span class="ot">&lt;-</span> w</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>  x[i,] <span class="ot">&lt;-</span> <span class="fu">exp</span>(w[i,])<span class="sc">/</span><span class="fu">sum</span>(<span class="fu">exp</span>(w[i,]))</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>}</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>z <span class="ot">&lt;-</span> <span class="fu">log</span>(x)</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co">#生成响应变量y</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>sig <span class="ot">&lt;-</span> <span class="fl">0.5</span>; beta_star <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="fl">0.8</span>,<span class="fl">0.6</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="sc">-</span><span class="fl">1.5</span>,<span class="sc">-</span><span class="fl">0.5</span>,<span class="fl">1.2</span>,<span class="fu">rep</span>(<span class="dv">0</span>,p<span class="dv">-8</span>))</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>y <span class="ot">&lt;-</span> z <span class="sc">%*%</span> beta_star<span class="sc">+</span><span class="fu">rnorm</span>(n,<span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> sig)</span></code></pre></div>
+<p>这部分直接将data.rda文件中的数据生成为y和z变量供本文档使用。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(SA24204132)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">data</span>(data)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>y <span class="ot">&lt;-</span> data[<span class="dv">1</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>z <span class="ot">&lt;-</span> data[<span class="dv">2</span><span class="sc">:</span><span class="dv">31</span>]</span></code></pre></div>
+</div>
+<div id="调参" class="section level3">
+<h3>调参</h3>
+<p>本部分分别使用_r_clambda_和_r_slambda_进行调参，前者是找GIC函数的数值最小点，所以速度较慢，后者遍历给定的参数取值点，若提前能将<span class="math inline">\(\lambda\)</span>的取值范围锁定在较小的范围，则可以大大加快调参的速度。从结果可以看出，两种方法调参的值较为接近。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>lambda1 <span class="ot">&lt;-</span> <span class="fu">r_clambda</span>(y,z,mu)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>lambda1</span></code></pre></div>
+<pre><code>## [1] 0.08707062</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>lambda2 <span class="ot">&lt;-</span> <span class="fu">r_slambda</span>(y,z,mu,<span class="at">low =</span> <span class="dv">0</span>, <span class="at">up =</span> <span class="fl">0.15</span>, <span class="at">by =</span> <span class="fl">0.01</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>lambda2</span></code></pre></div>
+<pre><code>## [1] 0.09</code></pre>
+</div>
+<div id="回归" class="section level3">
+<h3>回归</h3>
+<p>这里主要演示用R函数的版本进行的回归。</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>mu <span class="ot">&lt;-</span> <span class="dv">1</span>; lambda <span class="ot">&lt;-</span> lambda1</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">r_cdmlasso</span>(y,z,lambda,mu)</span></code></pre></div>
+<pre><code>##  [1]  0.89804940 -0.51883009  0.40646580  0.00000000  0.00000000 -1.23478121
+##  [7] -0.54626123  1.11265154  0.00000000 -0.04424443  0.00000000  0.00000000
+## [13]  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000  0.00000000
+## [19]  0.00000000  0.00000000  0.07256296  0.00000000  0.00000000  0.00000000
+## [25]  0.00000000  0.00000000  0.00000000  0.00000000 -0.07091527 -0.07470532</code></pre>
+<p>从回归结果可以看出，拟合的估计量很好地对我们初始设定的<code>beta_star &lt;- c(1,-0.8,0.6,0,0,-1.5,-0.5,1.2,rep(0,p-8))</code>的稀疏性进行了预测，其中第2、3、6、7位置的非零性以及正负性都做出了正确的判断。</p>
+</div>
+<div id="计算实验" class="section level3">
+<h3>计算实验</h3>
+<p>我们模仿论文内容，设计了一次随机模拟的计算实验，并以估计绝对误差、l1泛化误差、l2泛化误差、l<span class="math inline">\(\infty\)</span>泛化误差、假阳性数量、假阴性数量（其中阳性、阴性数量分别指对<span class="math inline">\(\beta\)</span>所有位置估计为非零和零的数量）来检验模型的拟合效果。</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">132</span>); <span class="fu">options</span>(<span class="at">warn =</span> <span class="sc">-</span><span class="dv">1</span>); simulations <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#设定要生成的n个p维正态分布随机变量的信息</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fl">0.2</span>; n <span class="ot">&lt;-</span> <span class="dv">50</span>; p <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="fu">log</span>(<span class="fl">0.5</span><span class="sc">*</span>p),<span class="dv">5</span>),<span class="fu">rep</span>(<span class="dv">0</span>,p<span class="dv">-5</span>))</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow =</span> p,<span class="at">ncol =</span> p)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>p) {</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>p) {</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    sigma[i,j] <span class="ot">&lt;-</span> l<span class="sc">^</span><span class="fu">abs</span>(i<span class="sc">-</span>j)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  }</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>}</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#m次mc随机实验</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>simulations) {</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  mc_beta <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow =</span> m, <span class="at">ncol =</span> p)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  mc_PE <span class="ot">&lt;-</span> mc_l1 <span class="ot">&lt;-</span> mc_l2 <span class="ot">&lt;-</span> mc_linf <span class="ot">&lt;-</span> mc_FP <span class="ot">&lt;-</span> mc_FN <span class="ot">&lt;-</span> <span class="fu">numeric</span>(m)</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  w <span class="ot">&lt;-</span> MASS<span class="sc">::</span><span class="fu">mvrnorm</span>(n,<span class="at">mu=</span>theta,<span class="at">Sigma =</span> sigma)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="co">#将w样本转化为成分数据x</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  x <span class="ot">&lt;-</span> w</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>    x[i,] <span class="ot">&lt;-</span> <span class="fu">exp</span>(w[i,])<span class="sc">/</span><span class="fu">sum</span>(<span class="fu">exp</span>(w[i,]))</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  }</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>  <span class="co">#按照模型1、2方式转换成分数据x为对数数据z</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>  z <span class="ot">&lt;-</span> <span class="fu">log</span>(x)</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>  <span class="co">#生成响应变量y</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> <span class="dv">1</span>; sig <span class="ot">&lt;-</span> <span class="fl">0.5</span>; beta_star <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="sc">-</span><span class="fl">0.8</span>,<span class="fl">0.6</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="sc">-</span><span class="fl">1.5</span>,<span class="sc">-</span><span class="fl">0.5</span>,<span class="fl">1.2</span>,<span class="fu">rep</span>(<span class="dv">0</span>,p<span class="dv">-8</span>))</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>  y <span class="ot">&lt;-</span> z <span class="sc">%*%</span> beta_star<span class="sc">+</span><span class="fu">rnorm</span>(n,<span class="at">mean =</span> <span class="dv">0</span>, <span class="at">sd =</span> sig)</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  lambda <span class="ot">&lt;-</span> <span class="fu">c_clambda</span>(y,z,mu)</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  mc_beta[m,] <span class="ot">&lt;-</span> <span class="fu">c_cdmlasso</span>(y,z,lambda,mu)</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>  </span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>  <span class="co">#计算measuring指标</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>  bias <span class="ot">&lt;-</span> mc_beta[m,]<span class="sc">-</span>beta_star</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>  mc_PE[m] <span class="ot">&lt;-</span> (<span class="fu">norm</span>((y<span class="sc">-</span>(z <span class="sc">%*%</span> mc_beta[m,])),<span class="at">type =</span> <span class="st">&#39;2&#39;</span>)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>n</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>  mc_l1[m] <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(bias))</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>  mc_l2[m] <span class="ot">&lt;-</span> <span class="fu">norm</span>(bias,<span class="at">type =</span> <span class="st">&#39;2&#39;</span>)</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  mc_linf[m] <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(bias))</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  mc_FP[m] <span class="ot">&lt;-</span> <span class="fu">sum</span>(beta_star[<span class="fu">which</span>(mc_beta[m,] <span class="sc">!=</span> <span class="dv">0</span>)] <span class="sc">==</span> <span class="dv">0</span>)</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>  mc_FN[m] <span class="ot">&lt;-</span> <span class="fu">sum</span>(mc_beta[m,][<span class="fu">which</span>(beta_star <span class="sc">!=</span> <span class="dv">0</span>)] <span class="sc">==</span> <span class="dv">0</span>)</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>}</span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">round</span>(<span class="fu">c</span>(<span class="st">&#39;rho&#39;</span><span class="ot">=</span>l,</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>              <span class="st">&#39;samplesize&#39;</span><span class="ot">=</span>n,</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a>              <span class="st">&#39;dimension&#39;</span><span class="ot">=</span>p,</span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a>              <span class="st">&#39;PE&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_PE),</span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>              <span class="st">&#39;l1loss&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_l1),</span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>              <span class="st">&#39;l2loss&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_l2),</span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>              <span class="st">&#39;linfloss&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_linf),</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>              <span class="st">&#39;FP&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_FP),</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>              <span class="st">&#39;FN&#39;</span><span class="ot">=</span><span class="fu">mean</span>(mc_FN)),<span class="dv">2</span>))</span></code></pre></div>
+<pre><code>##        rho samplesize  dimension         PE     l1loss     l2loss   linfloss 
+##       0.20      50.00      30.00       0.58       0.59       0.26       0.16 
+##         FP         FN 
+##       0.10       0.20</code></pre>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

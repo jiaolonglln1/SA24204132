@@ -1,0 +1,137 @@
+---
+title: "Introduction to R-package"
+author: "SA24204132"
+date: "2024-12-04"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to R-package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 总览
+
+__SA24204132__该包是文献https://doi.org/10.1093%2Fbiomet%2Fasu031的一个实现，这篇文章主要讨论了关于成分数据的lasso问题，由于成分数据存在行和为常数的约束，导致一般的lasso算法无法应用于此类问题，因此作者引入了基于成分数据对数对比模型的坐标下降算法。该包内主要包括以下函数：_data_是用于测试包内容的原始数据集；_s_soft_thr_是求一般的lasso问题的软阈值函数；_r_cdmlasso_和_c_cdmlasso_是论文中核心算法的实现，前者为R代码，后者为Rcpp实现，后续有此表示的皆为同意，不再赘述；_r_clambda_和_c_clambda_是对lasso罚项的调参函数，具体是将GIC信息准则作为一个连续函数进行优化来求解；_r_slambda_同样是调参函数，但其方法是给定一个lambda取值范围得到序列，通过对其遍历求得使得GIC达到最小的lambda。本文档主要演示R函数的使用说明，Rcpp函数与R函数类似，唯一需要注意的问题是，Rcpp函数只能接受数值向量和数值矩阵作为输入，而本文档中_data_是list格式，类似清空均需要再使用函数前转变其格式，这点在函数使用说明中也同样做了解释。
+
+## 详细说明
+
+### 数据
+
+这里首先展示了包内数据集的生成过程，本数据集参考论文中computing experiment的部分，首先生成一个30维50样本的正态随机数矩阵，再将其进行对数对比转换变生成随机变量矩阵z。再约定一个30维的稀疏系数向量$\beta$以及满足正态性假定的残差项，由此两部分以及z反向生成满足回归方程的响应变量y。将y和z输出为50*31的矩阵就是data.rda文件的内容。
+
+```{r,eval=FALSE}
+#生成正态随机变量矩阵
+l <- 0.2; n <- 50; p <- 30
+theta <- c(rep(log(0.5*p),5),rep(0,p-5))
+sigma <- matrix(0,nrow = p,ncol = p)
+for (i in 1:p) {
+  for (j in 1:p) {
+    sigma[i,j] <- l^abs(i-j)
+  }
+}
+w <- MASS::mvrnorm(n,mu=theta,Sigma = sigma)
+
+#将正态样本转化为对数成分数据z
+x <- w
+for (i in 1:n) {
+  x[i,] <- exp(w[i,])/sum(exp(w[i,]))
+}
+z <- log(x)
+
+#生成响应变量y
+sig <- 0.5; beta_star <- c(1,-0.8,0.6,0,0,-1.5,-0.5,1.2,rep(0,p-8))
+y <- z %*% beta_star+rnorm(n,mean = 0, sd = sig)
+```
+
+这部分直接将data.rda文件中的数据生成为y和z变量供本文档使用。
+
+```{r 1}
+library(SA24204132)
+data(data)
+y <- data[1]
+z <- data[2:31]
+```
+
+### 调参
+
+本部分分别使用_r_clambda_和_r_slambda_进行调参，前者是找GIC函数的数值最小点，所以速度较慢，后者遍历给定的参数取值点，若提前能将$\lambda$的取值范围锁定在较小的范围，则可以大大加快调参的速度。从结果可以看出，两种方法调参的值较为接近。
+
+```{r 2}
+mu <- 1
+lambda1 <- r_clambda(y,z,mu)
+lambda1
+```
+
+```{r 3}
+mu <- 1
+lambda2 <- r_slambda(y,z,mu,low = 0, up = 0.15, by = 0.01)
+lambda2
+```
+
+### 回归
+
+这里主要演示用R函数的版本进行的回归。
+
+```{r 4}
+mu <- 1; lambda <- lambda1
+r_cdmlasso(y,z,lambda,mu)
+```
+
+从回归结果可以看出，拟合的估计量很好地对我们初始设定的`beta_star <- c(1,-0.8,0.6,0,0,-1.5,-0.5,1.2,rep(0,p-8))`的稀疏性进行了预测，其中第2、3、6、7位置的非零性以及正负性都做出了正确的判断。
+
+### 计算实验
+
+我们模仿论文内容，设计了一次随机模拟的计算实验，并以估计绝对误差、l1泛化误差、l2泛化误差、l$\infty$泛化误差、假阳性数量、假阴性数量（其中阳性、阴性数量分别指对$\beta$所有位置估计为非零和零的数量）来检验模型的拟合效果。
+
+```{r 6}
+set.seed(132); options(warn = -1); simulations <- 10
+#设定要生成的n个p维正态分布随机变量的信息
+l <- 0.2; n <- 50; p <- 30
+theta <- c(rep(log(0.5*p),5),rep(0,p-5))
+sigma <- matrix(0,nrow = p,ncol = p)
+for (i in 1:p) {
+  for (j in 1:p) {
+    sigma[i,j] <- l^abs(i-j)
+  }
+}
+#m次mc随机实验
+for (m in 1:simulations) {
+  mc_beta <- matrix(0,nrow = m, ncol = p)
+  mc_PE <- mc_l1 <- mc_l2 <- mc_linf <- mc_FP <- mc_FN <- numeric(m)
+  w <- MASS::mvrnorm(n,mu=theta,Sigma = sigma)
+  #将w样本转化为成分数据x
+  x <- w
+  for (i in 1:n) {
+    x[i,] <- exp(w[i,])/sum(exp(w[i,]))
+  }
+  #按照模型1、2方式转换成分数据x为对数数据z
+  z <- log(x)
+  #生成响应变量y
+  mu <- 1; sig <- 0.5; beta_star <- c(1,-0.8,0.6,0,0,-1.5,-0.5,1.2,rep(0,p-8))
+  y <- z %*% beta_star+rnorm(n,mean = 0, sd = sig)
+  lambda <- c_clambda(y,z,mu)
+  mc_beta[m,] <- c_cdmlasso(y,z,lambda,mu)
+  
+  #计算measuring指标
+  bias <- mc_beta[m,]-beta_star
+  mc_PE[m] <- (norm((y-(z %*% mc_beta[m,])),type = '2')^2)/n
+  mc_l1[m] <- sum(abs(bias))
+  mc_l2[m] <- norm(bias,type = '2')
+  mc_linf[m] <- max(abs(bias))
+  mc_FP[m] <- sum(beta_star[which(mc_beta[m,] != 0)] == 0)
+  mc_FN[m] <- sum(mc_beta[m,][which(beta_star != 0)] == 0)
+}
+print(round(c('rho'=l,
+              'samplesize'=n,
+              'dimension'=p,
+              'PE'=mean(mc_PE),
+              'l1loss'=mean(mc_l1),
+              'l2loss'=mean(mc_l2),
+              'linfloss'=mean(mc_linf),
+              'FP'=mean(mc_FP),
+              'FN'=mean(mc_FN)),2))
+```
